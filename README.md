@@ -18,3 +18,7 @@ music_player  - starts with system and just launch:
     > send text and symbols on VFD
     > need compile (request wiringPi), command: 
     > g++ vfd_text.cpp -lwiringPi -o vfd_text
+
+
+## device:
+![device](device.jpg)

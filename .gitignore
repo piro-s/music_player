@@ -7,6 +7,9 @@
 # Don't ignore scheme
 !/scheme.png
 
+# Don't ignore device
+!/device.jpg
+
 # Don't ignore scripts
 !/scripts/*
 
