@@ -1,0 +1,15 @@
+# Ignore all files
+*
+
+# Don't ignore git files
+!.gitignore
+
+# Don't ignore scheme
+!/scheme.png
+
+# Don't ignore scripts
+!/scripts/*
+
+
+# Even if they are in subdirectories
+!*/

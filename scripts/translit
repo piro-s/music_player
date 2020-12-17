@@ -1,0 +1,35 @@
+#!/bin/bash
+# Перекодирует рекурсивно в текущем каталоге имена
+# файлов и каталогов в транслит.
+
+# shopt встроенная команда оболочки. Управляет опциями оболочки.
+# Если в каталоге нет ни одного файла, соответствующего шаблону,
+# то за имя файла принимается сам шаблон.
+# Ключ nullglob исправляет эту ситуацию
+shopt -s nullglob
+# Перебираем все файлы в текущем каталоге
+for NAME in * ; do
+# sed-ом заменяем символы кирилицы на символы латиницы
+ TRS=`echo $NAME | sed "y/абвгдезийклмнопрстуфхцы/abvgdezijklmnoprstufxcy/"`
+ TRS=`echo $TRS | sed "y/АБВГДЕЗИЙКЛМНОПРСТУФХЦЫ/ABVGDEZIJKLMNOPRSTUFXCY/"`
+ TRS=${TRS//ч/ch};
+ TRS=${TRS//Ч/CH} TRS=${TRS//ш/sh};
+ TRS=${TRS//Ш/SH} TRS=${TRS//ё/jo};
+ TRS=${TRS//Ё/JO} TRS=${TRS//ж/zh};
+ TRS=${TRS//Ж/ZH} TRS=${TRS//щ/sh\'};
+ TRS=${TRS///SH\'} TRS=${TRS//э/je};
+ TRS=${TRS//Э/JE} TRS=${TRS//ю/ju};
+ TRS=${TRS//Ю/JU} TRS=${TRS//я/ja};
+ TRS=${TRS//Я/JA} TRS=${TRS//ъ/\`};
+ TRS=${TRS//ъ\`} TRS=${TRS//ь/\'};
+ TRS=${TRS//Ь/\'}
+ TRS=${TRS// / }
+ # переименовываем
+ mv -v "$NAME" "$TRS"
+# Если это каталог, заходим в него
+ if [[ `file -b "$TRS"` == directory ]]; then
+ cd "$TRS"
+ "$0"
+ cd ..
+ fi
+done

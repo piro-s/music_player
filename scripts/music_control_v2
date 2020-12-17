@@ -1,0 +1,87 @@
+#!/bin/bash
+#
+# Script for control music player
+# 7 button for control mpc
+# 7 button - shutdown - press more then 1 second - change PASSWORD
+
+##--- Variables - pins
+# Button pins - input WPi
+button_prev=0
+button_play=1
+button_pause=2
+button_next=3
+button_repeat=4
+button_random=5
+button_shutdown=6
+button_max=7
+
+
+##--- Init
+init_pins() ##--- Init pins
+{
+    # Init buttons
+    for (( it_pins = 0; it_pins < button_max; it_pins++ ))
+    do
+        gpio mode $it_pins in
+        gpio mode $it_pins up
+    done
+}
+
+init_pins # init pins
+
+while true
+do
+    if [ "$(cat vfd_set)" -eq $button_prev ] # If prev button pressed was prev or next, set play
+    then
+        echo $button_play > vfd_set
+    elif [ "$(cat vfd_set)" -eq $button_next ]
+    then
+        echo $button_play > vfd_set
+    fi
+
+    if [ "$(gpio read $button_prev)" -eq '0' ]  # Prev song
+    then
+        mpc prev > mpc_now
+        echo $button_prev > vfd_set
+        sleep 0.3
+    fi
+    if [ "$(gpio read $button_play)" -eq '0' ]  # Play song
+    then
+        mpc play > mpc_now
+        echo $button_play > vfd_set
+        sleep 0.3
+    fi
+    if [ "$(gpio read $button_pause)" -eq '0' ] # Pause song
+    then
+        mpc pause > mpc_now
+        echo $button_pause > vfd_set
+        sleep 0.3
+    fi
+    if [ "$(gpio read $button_next)" -eq '0' ]  # Next song
+    then
+        mpc next > mpc_now
+        echo $button_next > vfd_set
+        sleep 0.3
+    fi
+    if [ "$(gpio read $button_repeat)" -eq '0' ] # Repeat
+    then
+        mpc repeat > mpc_now
+        sleep 0.3
+    fi
+    if [ "$(gpio read $button_random)" -eq '0' ] # Random
+    then
+        mpc random > mpc_now
+        sleep 0.3
+    fi
+    if [ "$(gpio read $button_shutdown)" -eq '0' ] # Shutdown
+    then
+        sleep 1
+
+        if [ "$(gpio read $button_shutdown)" -eq '0' ] # Shutdown
+        then
+            echo PASSWORD | sudo shutdown now # Change PASSWORD
+        fi
+    fi
+
+    sleep 0.1
+done

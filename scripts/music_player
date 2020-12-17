@@ -1,0 +1,23 @@
+#!/bin/bash
+#
+# Script for startup music player, change PASSWORD
+# Write in rc.local to start with system
+
+
+# Start PWM cooler
+echo PASSWORD | sudo /home/piro_tex/music_player/pwm_cooler &
+echo $! > /home/piro_tex/music_player/music_id
+
+# Start mpc update - echo mpc every 1 second
+/home/piro_tex/music_player/mpc_update &
+echo $! >> /home/piro_tex/music_player/music_id
+
+# Start music control - process pressed button
+/home/piro_tex/music_player/music_control_v2 &
+echo $! >> /home/piro_tex/music_player/music_id
+
+# Start vfd text - send to VFD text and symbols
+echo PASSWORD | sudo /home/piro_tex/music_player/vfd_text &
+echo $! >> /home/piro_tex/music_player/music_id
+
+exit 0

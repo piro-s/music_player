@@ -1,0 +1,488 @@
+#!/bin/bash
+#
+# Script for control music player
+# 7 button for control mpc
+# 3 pin out for green chinese VFD
+
+##--- Variables - pins
+# Button pins - input WPi
+button_prev_pl=0
+button_prev_tr=1
+button_play=2
+button_next_tr=3
+button_next_pl=4
+button_stop=5
+button_random=6
+button_max=7
+
+# VFD pins - output WPi
+vfd_DI=7
+vfd_CK=8
+vfd_CS=9
+
+
+##--- Variables
+tick=0 # For count ms
+vfd_segments=12 # Number of segments on display
+
+
+##--- Functions
+ascii2hex() # First argument is what was convert
+{
+    printf "0x%02X" "'$1"
+} # ascii2hex()
+
+getRussian() # Get russian symbols in hex
+{
+    byte_a=$(ascii2hex 'а')
+    byte_A=$(ascii2hex 'А')
+
+    byte_b=$(ascii2hex 'б')
+    byte_B=$(ascii2hex 'Б')
+
+    byte_v=$(ascii2hex 'в')
+    byte_V=$(ascii2hex 'В')
+
+    byte_g=$(ascii2hex 'г')
+    byte_G=$(ascii2hex 'Г')
+
+    byte_d=$(ascii2hex 'д')
+    byte_D=$(ascii2hex 'Д')
+
+    byte_e=$(ascii2hex 'е')
+    byte_E=$(ascii2hex 'Е')
+
+    byte_e_=$(ascii2hex 'ё')
+    byte_E_=$(ascii2hex 'Ё')
+
+    byte_j=$(ascii2hex 'ж')
+    byte_J=$(ascii2hex 'Ж')
+
+    byte_z=$(ascii2hex 'з')
+    byte_Z=$(ascii2hex 'З')
+
+    byte_i=$(ascii2hex 'и')
+    byte_I=$(ascii2hex 'И')
+
+    byte_i_=$(ascii2hex 'й')
+    byte_I_=$(ascii2hex 'Й')
+
+    byte_k=$(ascii2hex 'к')
+    byte_K=$(ascii2hex 'К')
+
+    byte_l=$(ascii2hex 'л')
+    byte_L=$(ascii2hex 'Л')
+
+    byte_m=$(ascii2hex 'м')
+    byte_M=$(ascii2hex 'М')
+
+    byte_n=$(ascii2hex 'н')
+    byte_N=$(ascii2hex 'Н')
+
+    byte_o=$(ascii2hex 'о')
+    byte_O=$(ascii2hex 'О')
+
+    byte_p=$(ascii2hex 'п')
+    byte_P=$(ascii2hex 'П')
+
+    byte_r=$(ascii2hex 'р')
+    byte_R=$(ascii2hex 'Р')
+
+    byte_s=$(ascii2hex 'с')
+    byte_S=$(ascii2hex 'С')
+
+    byte_t=$(ascii2hex 'т')
+    byte_T=$(ascii2hex 'Т')
+
+    byte_u=$(ascii2hex 'у')
+    byte_U=$(ascii2hex 'У')
+
+    byte_f=$(ascii2hex 'ф')
+    byte_F=$(ascii2hex 'Ф')
+
+    byte_h=$(ascii2hex 'х')
+    byte_H=$(ascii2hex 'Х')
+
+    byte_c=$(ascii2hex 'ц')
+    byte_C=$(ascii2hex 'Ц')
+
+    byte_ch=$(ascii2hex 'ч')
+    byte_CH=$(ascii2hex 'Ч')
+
+    byte_sh=$(ascii2hex 'ш')
+    byte_SH=$(ascii2hex 'Ш')
+
+    byte_shch=$(ascii2hex 'щ')
+    byte_SHCH=$(ascii2hex 'Щ')
+
+    byte__b=$(ascii2hex 'ъ')
+    byte__B=$(ascii2hex 'Ъ')
+
+    byte_bl=$(ascii2hex 'ы')
+    byte_BL=$(ascii2hex 'Ы')
+
+    byte_b_=$(ascii2hex 'ь')
+    byte_B_=$(ascii2hex 'Ь')
+
+    byte__e=$(ascii2hex 'э')
+    byte__E=$(ascii2hex 'Э')
+
+    byte_yu=$(ascii2hex 'ю')
+    byte_YU=$(ascii2hex 'Ю')
+
+    byte_ya=$(ascii2hex 'я')
+    byte_YA=$(ascii2hex 'Я')
+} # getRussian()
+
+checkRussian() # First argument it's what need check
+{
+    check_byte=$1
+
+    case $check_byte in
+        $byte_a | $byte_A)
+            echo 0x61
+            ;;
+        $byte_b | $byte_B) # Spec
+            echo 0x01
+            ;;
+        $byte_v | $byte_V) # Spec
+            echo 0x02
+            ;;
+        $byte_g | $byte_G)
+            echo 0x72
+            ;;
+        $byte_d | $byte_D)
+            echo 0x80
+            ;;
+        $byte_e | $byte_E)
+            echo 0x65
+            ;;
+        $byte_e_ | $byte_E_)
+            echo 0x65
+            ;;
+        $byte_j | $byte_J)
+            echo 0x81
+            ;;
+        $byte_z | $byte_Z)
+            echo 0x82
+            ;;
+        $byte_i | $byte_I)
+            echo 0x83
+            ;;
+        $byte_i_ | $byte_I_)
+            echo 0x84
+            ;;
+        $byte_k | $byte_K)
+            echo 0x85
+            ;;
+        $byte_l | $byte_L)
+            echo 0x86
+            ;;
+        $byte_m | $byte_M)
+            echo 0x87
+            ;;
+        $byte_n | $byte_N)
+            echo 0x88
+            ;;
+        $byte_o | $byte_O)
+            echo 0x6F
+            ;;
+        $byte_p | $byte_P)
+            echo 0x89
+            ;;
+        $byte_r | $byte_R)
+            echo 0x70
+            ;;
+        $byte_s | $byte_S)
+            echo 0x8A
+            ;;
+        $byte_t | $byte_T)
+            echo 0x8B
+            ;;
+        $byte_u | $byte_U)
+            echo 0x79
+            ;;
+        $byte_f | $byte_F)
+            echo 0x8D
+            ;;
+        $byte_h | $byte_H)
+            echo 0x78
+            ;;
+        $byte_c | $byte_C)
+            echo 0x8E
+            ;;
+        $byte_ch | $byte_CH)
+            echo 0x8F
+            ;;
+        $byte_sh | $byte_SH)
+            echo 0x90
+            ;;
+        $byte_shch | $byte_SHCH)
+            echo 0x91
+            ;;
+        $byte__b | $byte__B)
+            echo 0x92
+            ;;
+        $byte_bl | $byte_BL)
+            echo 0x93
+            ;;
+        $byte_b_ | $byte_B_)
+            echo 0x94
+            ;;
+        $byte__e | $byte__E)
+            echo 0x95
+            ;;
+        $byte_yu | $byte_YU)
+            echo 0x96
+            ;;
+        $byte_ya | $byte_YA)
+            echo 0x97
+            ;;
+        *)
+            echo $check_byte
+    esac
+} # checkRussian()
+
+
+##--- Init
+init_pins() ##--- Init pins
+{
+    # Init buttons
+    for (( it_pins = 0; it_pins < button_max; it_pins++ ))
+    do
+        gpio mode $it_pins in
+        gpio mode $it_pins up
+    done
+
+    # Init VFD pins
+    gpio mode $vfd_DI out
+    gpio mode $vfd_CK out
+    gpio mode $vfd_CS out
+}
+
+
+##--- VFD set pins
+vfd_CS_high()
+{
+    gpio write $vfd_CS 1
+} # vfd_CS_high()
+vfd_CS_low()
+{
+    gpio write $vfd_CS 0
+} # vfd_CS_low()
+
+vfd_CK_high()
+{
+    gpio write $vfd_CK 1
+} # vfd_CK_high()
+vfd_CK_low()
+{
+    gpio write $vfd_CK 0
+} # vfd_CK_low()
+
+vfd_DI_high()
+{
+    gpio write $vfd_DI 1
+} # vfd_DI_high()
+vfd_DI_low()
+{
+    gpio write $vfd_DI 0
+} # vfd_DI_low()
+
+
+##--- VFD send bytes
+vfd_tranmitByte() # $1 - byte
+{
+    byte=$1 # Byte - first argument in func
+
+    for (( it_tranmitByte = 0; it_tranmitByte < 8; it_tranmitByte++ ))
+    do
+        vfd_CK_low
+
+        if ((( $byte >> $it_tranmitByte ) & 0x01 ))
+        then
+            vfd_DI_high
+        else
+            vfd_DI_low
+        fi
+
+        vfd_CK_high
+    done
+} # vfd_tranmitByte()
+
+vfd_sendChar() # $1 - place; $2 - char
+{
+    vfd_CS_low
+    
+    vfd_place=$1+0x20
+    vfd_char=$2
+
+    vfd_tranmitByte $vfd_place
+    vfd_tranmitByte $(checkRussian $(ascii2hex $vfd_char))
+
+    vfd_CS_high
+} # vfd_sendChar
+
+vfd_sendText() # Just one arg - string, place always with 0; show after send
+{
+    vfd_CS_low
+    
+    vfd_place=0x20
+    vfd_string="$@"
+
+    vfd_tranmitByte $vfd_place # Send place == 0
+
+    for (( it_sendText = 0; it_sendText < $vfd_segments; it_sendText++ ))
+    do
+        if (( $it_sendText < ${#vfd_string} ))
+        then
+            vfd_tranmitByte $(checkRussian $(ascii2hex ${vfd_string:$it_sendText:1})) # Send char in string
+        else
+            vfd_tranmitByte $(ascii2hex ' ') # Send space if string ends
+        fi
+    done
+
+    vfd_CS_high
+} # vfd_sendText()
+
+
+##--- VFD symbols
+vfd_setSymbol() # $1 - place
+{
+    place=$1+0x60
+
+    vfd_CS_low
+    vfd_tranmitByte $place
+    vfd_tranmitByte 0xFF
+    vfd_CS_high
+} # vfd_setSymbol()
+
+vfd_resetSymbol() # $1 - place
+{
+    place=$1+0x60
+
+    vfd_CS_low
+    vfd_tranmitByte $place
+    vfd_tranmitByte 0x00
+    vfd_CS_high
+} # vfd_resetSymbol()
+
+vfd_russianSymbols() # Send russian 'b' and 'v' in user memory
+{
+    vfd_CS_low
+    vfd_tranmitByte 0x41 # CGRAM - 0x01 in Font table - symbol 'b'
+    vfd_tranmitByte 0x7C
+    vfd_tranmitByte 0x54
+    vfd_tranmitByte 0x54
+    vfd_tranmitByte 0x54
+    vfd_tranmitByte 0x24
+
+    vfd_tranmitByte 0x7C # CGRAM - 0x02 in Font table - symbol 'v'
+    vfd_tranmitByte 0x54
+    vfd_tranmitByte 0x54
+    vfd_tranmitByte 0x54
+    vfd_tranmitByte 0x28
+    vfd_CS_high
+} # vfd_russianSymbols()
+
+
+##--- VFD functions
+vfd_init()
+{
+    vfd_CS_low
+
+    vfd_tranmitByte 0xE0 # Command - number of digits set
+    vfd_tranmitByte 0x0B # Number of characters displayed on the display
+
+    vfd_CS_high
+    vfd_CS_low
+
+    vfd_tranmitByte 0xE4 # Command - dimming set
+    vfd_tranmitByte 0xFF # Brightness
+
+    vfd_CS_high
+    vfd_CS_low
+
+    vfd_tranmitByte 0xE8 # Command - display lights - normal mode
+
+    vfd_CS_high
+} # vfd_init()
+
+vfd_modeStandby()
+{
+    vfd_CS_low
+    vfd_tranmitByte 0xED # Command - standby mode
+    vfd_CS_high
+} # vfd_modeStandby()
+
+vfd_modeNormal()
+{
+    vfd_CS_low
+    vfd_tranmitByte 0xEC # Command - normal mode
+    vfd_CS_high
+} # vfd_modeNormal()
+
+echo "Initialization"
+echo "Init pins"
+init_pins # init pins
+echo "Init VFD"
+vfd_init # init vfd
+echo "Get russian symbols in hex"
+getRussian
+vfd_russianSymbols
+
+echo "Send text"
+
+# while true
+# do
+#     vfd_modeNormal
+#     vfd_sendText "Пшшш."
+#     vfd_modeStandby
+#     vfd_sendText " "
+#     vfd_modeStandby
+#     vfd_modeNormal
+#     vfd_sendText "Пшшш..."
+#     sleep 0.5
+#     vfd_modeStandby
+#     vfd_sendText "Люк"
+#     vfd_modeNormal
+#     sleep 1
+#     vfd_modeStandby
+#     vfd_sendText "Я твой отец"
+#     vfd_modeNormal
+#     sleep 2
+#     vfd_modeStandby
+#     vfd_sendText "Нееееееет!"
+#     vfd_modeNormal
+#     sleep 5
+# done
+
+# while true
+# do
+#     vfd_sendText "Group-So0000"
+#     sleep 0.5
+#     vfd_sendText "roup-Son0001"
+#     sleep 0.5
+#     vfd_sendText "oup-Song0002"
+#     sleep 0.5
+#     vfd_sendText "up-SongN0003"
+#     sleep 0.5
+#     vfd_sendText "p-SongNa0004"
+#     sleep 0.5
+#     vfd_sendText "-SongNam0005"
+#     sleep 0.5
+#     vfd_sendText "SongName0006"
+#     sleep 0.5
+#     vfd_sendText "-SongNam0007"
+#     sleep 0.5
+#     vfd_sendText "p-SongNa0008"
+#     sleep 0.5
+#     vfd_sendText "up-SongN0009"
+#     sleep 0.5
+#     vfd_sendText "oup-Song0010"
+#     sleep 0.5
+#     vfd_sendText "roup-Son0011"
+# done
+
+
+echo "End"
